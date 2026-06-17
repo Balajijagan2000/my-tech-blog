@@ -1,0 +1,77 @@
+---
+import Avatar from "../components/Avatar.astro";
+import Layout from "../layouts/BlogPost.astro";
+import { PORTFOLIO_LINK } from "../consts";
+---
+
+<Layout title="About" description="About me and the blog">
+	<Avatar />
+	<h2>Me</h2>
+	<p>
+		Hi 👋, I'm Jagan working as a software developer and an enthusiast in
+		tech & web development. I have around 3+ years of experience in backend
+		development building scalable and maintainable applications.
+	</p>
+	<p>
+		You can explore my professional work and projects on my <a
+			href={PORTFOLIO_LINK}
+			target="_blank"
+			rel="noopener noreferrer">portfolio website</a
+		>.
+	</p>
+
+	<h2>Blog</h2>
+	<p>
+		In this blog, I will share my thoughts, insights and knowledge on tech,
+		backend development, web development, mini tutorials, latest tech
+		insights and tips & tricks.
+	</p>
+	<div class="tech-badge-container">
+		<span class="astro-badge">
+			Built with <a
+				href="https://astro.build"
+				target="_blank"
+				rel="noopener noreferrer">Astro</a
+			>
+		</span>
+	</div>
+</Layout>
+
+<style>
+	.tech-badge-container {
+		display: flex;
+		justify-content: center;
+		margin-top: 3rem;
+		margin-bottom: 1rem;
+	}
+
+	.astro-badge {
+		font-size: 0.85rem;
+		font-weight: 500;
+		padding: 0.4rem 1rem;
+		border-radius: 9999px;
+		background-color: rgba(var(--gray-light), 0.3);
+		border: 1px solid rgba(var(--gray-light), 0.8);
+		color: rgb(var(--gray-dark));
+		transition:
+			background-color 0.2s ease,
+			border-color 0.2s ease;
+	}
+
+	.astro-badge a {
+		color: var(--accent);
+		text-decoration: none;
+		font-weight: 600;
+	}
+
+	.astro-badge a:hover {
+		text-decoration: underline;
+	}
+
+	/* Dark Mode Theme Support */
+	html.dark .astro-badge {
+		background-color: rgba(34, 41, 57, 0.4);
+		border-color: rgba(229, 233, 240, 0.1);
+		color: #e5e9f0;
+	}
+</style>

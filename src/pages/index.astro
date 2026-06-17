@@ -1,0 +1,428 @@
+---
+import { Image } from "astro:assets";
+import { getCollection } from "astro:content";
+import BaseHead from "../components/BaseHead.astro";
+import Footer from "../components/Footer.astro";
+import FormattedDate from "../components/FormattedDate.astro";
+import Header from "../components/Header.astro";
+import { SITE_DESCRIPTION, SITE_TITLE } from "../consts";
+
+const posts = (await getCollection("blog")).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+
+// Calculate top 10 popular tags based on post frequency
+const tagCounts = posts.flatMap(post => post.data.tags || []).reduce((acc, tag) => {
+	acc[tag] = (acc[tag] || 0) + 1;
+	return acc;
+}, {} as Record<string, number>);
+
+const popularTags = Object.entries(tagCounts)
+	.sort((a, b) => b[1] - a[1]) // Sort by frequency descending
+	.slice(0, 10) // Limit to top 10
+	.map(entry => entry[0]);
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+		<style>
+			main {
+				width: 960px;
+			}
+			ul {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 2rem;
+				list-style-type: none;
+				margin: 0;
+				padding: 0;
+			}
+			ul li {
+				width: calc(50% - 1rem);
+				transition: opacity 0.3s ease, transform 0.3s ease;
+			}
+			ul li * {
+				text-decoration: none;
+				transition: 0.2s ease;
+			}
+			ul li:first-child {
+				width: 100%;
+				margin-bottom: 1rem;
+				text-align: center;
+			}
+			ul li:first-child img {
+				width: 100%;
+				max-width: 720px;
+				margin: 0 auto;
+			}
+			ul li:first-child .title {
+				font-size: 2.369rem;
+			}
+			ul li img {
+				margin-bottom: 0.5rem;
+				border-radius: 12px;
+			}
+			ul li a {
+				display: block;
+			}
+			.title {
+				margin: 0;
+				color: rgb(var(--black));
+				line-height: 1;
+			}
+			.date {
+				margin: 0;
+				color: rgb(var(--gray));
+			}
+			ul li a:hover h4,
+			ul li a:hover .date {
+				color: rgb(var(--accent));
+			}
+			ul a:hover img {
+				box-shadow: var(--box-shadow);
+			}
+
+			/* Search Input Styling */
+			.search-container {
+				margin-bottom: 2.5rem;
+				background: rgba(var(--gray-light), 0.15);
+				backdrop-filter: blur(8px);
+				padding: 1.5rem;
+				border-radius: 16px;
+				border: 1px solid rgba(var(--gray-light), 0.3);
+				box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+			}
+			.search-wrapper {
+				position: relative;
+				display: flex;
+				align-items: center;
+			}
+			.search-icon {
+				position: absolute;
+				left: 1rem;
+				color: rgb(var(--gray));
+				pointer-events: none;
+			}
+			#search-input {
+				width: 100%;
+				padding: 0.8rem 1rem 0.8rem 2.8rem;
+				font-size: 1rem;
+				border: 1px solid rgba(var(--gray-light), 0.8);
+				border-radius: 10px;
+				background-color: var(--bg-color);
+				color: rgb(var(--black));
+				outline: none;
+				transition: all 0.25s ease;
+			}
+			#search-input:focus {
+				border-color: var(--accent);
+				box-shadow: 0 0 0 3px rgba(var(--accent), 0.15);
+			}
+			.tags-filter {
+				margin-top: 1.2rem;
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				gap: 0.75rem;
+			}
+			.filter-label {
+				font-size: 0.85rem;
+				font-weight: 600;
+				color: rgb(var(--gray));
+				text-transform: uppercase;
+				letter-spacing: 0.05em;
+			}
+			.tags-list {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.5rem;
+			}
+			.tag-pill {
+				background-color: rgba(var(--gray-light), 0.4);
+				color: rgb(var(--gray-dark));
+				border: 1px solid transparent;
+				border-radius: 20px;
+				padding: 0.35rem 0.85rem;
+				font-size: 0.85rem;
+				cursor: pointer;
+				transition: all 0.2s ease;
+			}
+			.tag-pill:hover {
+				background-color: rgba(var(--gray-light), 0.7);
+				transform: translateY(-1px);
+			}
+			.tag-pill.active {
+				background-color: var(--accent);
+				color: white;
+				box-shadow: 0 4px 12px rgba(var(--accent), 0.25);
+			}
+
+			/* Card Tags Display */
+			.card-tags {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.35rem;
+				margin-top: 0.5rem;
+			}
+			.card-tag {
+				font-size: 0.75rem;
+				background-color: rgba(var(--gray-light), 0.4);
+				color: rgb(var(--gray-dark));
+				padding: 0.15rem 0.5rem;
+				border-radius: 4px;
+				font-weight: 500;
+				transition: all 0.2s ease;
+			}
+			ul li a:hover .card-tag {
+				background-color: rgba(var(--gray-light), 0.7);
+			}
+
+			/* No Results Styling */
+			.no-results-container {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				padding: 4rem 2rem;
+				text-align: center;
+				background: rgba(var(--gray-light), 0.05);
+				border-radius: 16px;
+				border: 1px dashed rgba(var(--gray-light), 0.5);
+				margin: 2rem 0;
+			}
+			.no-results-icon {
+				color: rgb(var(--gray));
+				margin-bottom: 1rem;
+			}
+			.no-results-title {
+				font-size: 1.25rem;
+				font-weight: 700;
+				margin-bottom: 0.25rem;
+				color: rgb(var(--black));
+			}
+			.no-results-text {
+				font-size: 0.95rem;
+				color: rgb(var(--gray));
+				margin-bottom: 1.5rem;
+			}
+			.clear-btn {
+				background-color: var(--accent);
+				color: white;
+				border: none;
+				border-radius: 8px;
+				padding: 0.6rem 1.2rem;
+				font-size: 0.9rem;
+				font-weight: 600;
+				cursor: pointer;
+				transition: all 0.2s ease;
+			}
+			.clear-btn:hover {
+				opacity: 0.9;
+				transform: translateY(-1px);
+			}
+
+			/* Grid layout adjustment when filtering */
+			ul.is-searching li:first-child {
+				width: calc(50% - 1rem);
+				margin-bottom: 0;
+				text-align: left;
+			}
+			ul.is-searching li:first-child img {
+				max-width: 100%;
+			}
+			ul.is-searching li:first-child .title {
+				font-size: 1.563em;
+			}
+
+			@media (max-width: 720px) {
+				ul {
+					gap: 0.5em;
+				}
+				ul li,
+				ul.is-searching li:first-child {
+					width: 100%;
+					text-align: center;
+				}
+				ul li:first-child {
+					margin-bottom: 0;
+				}
+				ul li:first-child .title {
+					font-size: 1.563em;
+				}
+				.search-container {
+					padding: 1rem;
+					margin-bottom: 1.5rem;
+				}
+				.tags-filter {
+					flex-direction: column;
+					align-items: flex-start;
+					gap: 0.5rem;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<Header />
+		<main>
+			<div class="search-container">
+				<div class="search-wrapper">
+					<svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+					<input
+						type="text"
+						id="search-input"
+						placeholder="Search posts by title or tag..."
+						aria-label="Search posts"
+					/>
+				</div>
+				{popularTags.length > 0 && (
+					<div class="tags-filter">
+						<span class="filter-label">Popular tags:</span>
+						<div class="tags-list">
+							{popularTags.map(tag => (
+								<button class="tag-pill" data-tag={tag}>
+									#{tag}
+								</button>
+							))}
+						</div>
+					</div>
+				)}
+			</div>
+
+			<section>
+				<ul>
+					{
+						posts.map((post, index) => (
+							<li
+								data-title={post.data.title.toLowerCase()}
+								data-tags={(post.data.tags || []).join(',').toLowerCase()}
+							>
+								<a href={`/blog/${post.id}/`}>
+									{post.data.heroImage && (
+										<Image
+											width={index === 0 ? 720 : 520}
+											height={index === 0 ? 360 : 360}
+											src={post.data.heroImage}
+											alt=""
+										/>
+									)}
+									<h4 class="title">{post.data.title}</h4>
+									<p class="date">
+										<FormattedDate
+											date={post.data.pubDate}
+										/>
+									</p>
+									{post.data.tags && post.data.tags.length > 0 && (
+										<div class="card-tags">
+											{post.data.tags.map(tag => (
+												<span class="card-tag">#{tag}</span>
+											))}
+										</div>
+									)}
+								</a>
+							</li>
+						))
+					}
+				</ul>
+
+				<div id="no-results" class="no-results-container" style="display: none;">
+					<svg class="no-results-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+					<p class="no-results-title">No posts found</p>
+					<p class="no-results-text">We couldn't find any posts matching your search query.</p>
+					<button id="clear-search-btn" class="clear-btn">Clear search</button>
+				</div>
+			</section>
+		</main>
+		<Footer />
+
+		<script>
+			const searchInput = document.getElementById('search-input') as HTMLInputElement;
+			const clearBtn = document.getElementById('clear-search-btn');
+			const postList = document.querySelector('main section ul');
+			const postItems = document.querySelectorAll('main section ul li');
+			const tagButtons = document.querySelectorAll('.tag-pill');
+			const noResults = document.getElementById('no-results');
+
+			let activeTag: string | null = null;
+
+			function filterPosts() {
+				const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+				let visibleCount = 0;
+
+				postItems.forEach(item => {
+					const title = item.getAttribute('data-title') || '';
+					const tagsString = item.getAttribute('data-tags') || '';
+					const tagsList = tagsString ? tagsString.split(',') : [];
+
+					// Input field matches BOTH title and tags
+					const matchesTitle = title.includes(query) || tagsList.some(tag => tag.includes(query));
+					// Pill matches active selected tag
+					const matchesTag = !activeTag || tagsList.includes(activeTag);
+
+					if (matchesTitle && matchesTag) {
+						(item as HTMLElement).style.display = '';
+						(item as HTMLElement).style.opacity = '1';
+						(item as HTMLElement).style.transform = 'scale(1)';
+						visibleCount++;
+					} else {
+						(item as HTMLElement).style.display = 'none';
+						(item as HTMLElement).style.opacity = '0';
+						(item as HTMLElement).style.transform = 'scale(0.95)';
+					}
+				});
+
+				// Toggle grid style when search or filtering is active
+				const isSearching = query !== '' || activeTag !== null;
+				if (isSearching) {
+					postList?.classList.add('is-searching');
+				} else {
+					postList?.classList.remove('is-searching');
+				}
+
+				// Display no results if visible count is 0
+				if (noResults) {
+					if (visibleCount === 0) {
+						noResults.style.display = 'flex';
+					} else {
+						noResults.style.display = 'none';
+					}
+				}
+			}
+
+			// Event listener for search input
+			searchInput?.addEventListener('input', filterPosts);
+
+			// Event listeners for tag pills
+			tagButtons.forEach(button => {
+				button.addEventListener('click', () => {
+					const tag = button.getAttribute('data-tag');
+					if (!tag) return;
+
+					if (activeTag === tag) {
+						// Deselect tag
+						activeTag = null;
+						button.classList.remove('active');
+					} else {
+						// Select new tag
+						tagButtons.forEach(btn => btn.classList.remove('active'));
+						activeTag = tag;
+						button.classList.add('active');
+					}
+
+					filterPosts();
+				});
+			});
+
+			// Event listener for clear button
+			const resetSearch = () => {
+				if (searchInput) searchInput.value = '';
+				activeTag = null;
+				tagButtons.forEach(btn => btn.classList.remove('active'));
+				filterPosts();
+			};
+
+			clearBtn?.addEventListener('click', resetSearch);
+		</script>
+	</body>
+</html>
