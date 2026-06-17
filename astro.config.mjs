@@ -4,7 +4,7 @@ import { defineConfig, fontProviders } from 'astro/config';
 
 
 export default defineConfig({
-	site: 'https://jagan.tech',
+	site: 'https://jagan-tech.vercel.app/',
 	integrations: [mdx(), sitemap()],
 	fonts: [
 		{
